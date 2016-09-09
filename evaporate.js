@@ -614,19 +614,11 @@
                     part: part
                 };
 
-                upload.canSend = function () {
-                    if (!part.active) {
-                        part.active = true;
-                        return true;
-                    }
-                };
-
                 upload.onErr = function (xhr, isOnError) {
                     part.loadedBytes = 0;
 
                     part.status = ERROR;
 
-                    part.active = false;
                     if ([CANCELED, ABORTED, PAUSED, PAUSING].indexOf(me.status) > -1) {
                         return;
                     }
@@ -672,7 +664,6 @@
                 upload.on200 = function (xhr) {
 
                     var eTag = xhr.getResponseHeader('ETag'), msg;
-                    part.active = false;
 
                     l.d('uploadPart 200 response for part #', partNumber, 'ETag:', eTag);
                     if (part.isEmpty || (eTag !== ETAG_OF_0_LENGTH_BLOB)) { // issue #58
@@ -1384,9 +1375,7 @@
                             requester.onProgress(evt);
                         };
                     }
-                    if (requester.canSend ? requester.canSend() : true) {
-                        xhr.send(payload);
-                    }
+                    xhr.send(payload);
                 };
 
                 requester.onFailedAuth = requester.onFailedAuth || function (xhr) {

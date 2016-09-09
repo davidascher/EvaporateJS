@@ -1045,7 +1045,7 @@
                         var nextPartNumberMarker = nodeValue(listPartsResult, "NextPartNumberMarker");
                         getUploadParts(nextPartNumberMarker); // let's fetch the next set of parts
                     } else {
-                        if (s3Parts.length === 0) {
+                        if (numParts === 0) {
                             partsOnS3.forEach(function (cp) {
                                 var uploadedPart = makePart(cp.partNumber, COMPLETE, cp.size);
                                 uploadedPart.eTag = cp.eTag;
@@ -1107,7 +1107,7 @@
                         signParams: con.signParams,
                         createdAt: new Date().toISOString()
                     };
-                if (con.computeContentMd5 && s3Parts.length && typeof s3Parts[1].md5_digest !== 'undefined') {
+                if (con.computeContentMd5 && numParts && typeof s3Parts[1].md5_digest !== 'undefined') {
                     newUpload.firstMd5Digest = s3Parts[1].md5_digest;
                 }
                 saveUpload(fileKey, newUpload);
@@ -1170,7 +1170,7 @@
             }
 
             function processPartsAsync() {
-                if (s3Parts.length - 1 === partsOnS3.length) {
+                if (numParts === partsOnS3.length) {
                     completeUpload();
                 } else {
                     processPartsList();
@@ -1221,7 +1221,7 @@
                 var info = stati.toString() + ' // bytesLoaded: ' + bytesLoaded.toString();
                 l.d('processPartsList(): ', info);
 
-                if (countUploadAttempts >= (s3Parts.length - 1)) {
+                if (countUploadAttempts >= numParts) {
                     me.info('part stati:', info);
                 }
             }

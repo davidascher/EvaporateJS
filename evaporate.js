@@ -536,7 +536,7 @@
                 } else {
                     createUploadFile();
                 }
-                processPartsAsync();
+                processPartsToUpload();
             }
 
             function initiateUpload(awsKey) { // see: http://docs.amazonwebservices.com/AmazonS3/latest/API/mpUploadInitiate.html
@@ -658,7 +658,7 @@
 
                         if (!isOnError) {
                             removePartFromProcessing(part.part);
-                            processPartsAsync();
+                            processPartsToUpload();
                         }
 
                         if (hasErrored) {
@@ -689,7 +689,7 @@
                         l.w(msg);
                         me.warn(msg);
                     }
-                    processPartsAsync();
+                    processPartsToUpload();
                 };
 
                 upload.onProgress = function (evt) {
@@ -712,7 +712,7 @@
                     part.status = ERROR;
                     part.loadedBytes = 0;
                     removePartFromProcessing(partNumber);
-                    processPartsAsync();
+                    processPartsToUpload();
                 };
 
                 backOff = backOffWait(part.attempts);
@@ -874,7 +874,7 @@
                     numDigestsProcessed += 1;
 
                     if (evaporatingCount < con.maxConcurrentParts) {
-                        processPartsAsync();
+                        processPartsToUpload();
                     }
 
                     if (numDigestsProcessed === numParts) {
@@ -1008,7 +1008,7 @@
                         removeUploadFile();
                         monitorProgress();
                         makeParts();
-                        processPartsAsync();
+                        processPartsToUpload();
                     } else {
                         var msg = 'Error listing parts for getUploadParts() starting at part # ' + partNumberMarker;
                         l.w(msg, getAwsResponse(xhr));
@@ -1163,15 +1163,12 @@
                 );
             }
 
-            function processPartsAsync() {
+            function processPartsToUpload() {
                 if (numParts === partsOnS3.length) {
                     completeUpload();
-                } else {
-                    processPartsList();
+                    return;
                 }
-            }
 
-            function processPartsList() {
                 var stati = [], bytesLoaded = [],
                     limit = con.maxConcurrentParts - evaporatingCount;
 
@@ -1274,7 +1271,7 @@
                                 abortPart(partIdx);
                                 part.status = PENDING;
                                 removePartFromProcessing(partIdx);
-                                processPartsAsync();
+                                processPartsToUpload();
                             },0);
                         }
 

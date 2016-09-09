@@ -297,7 +297,6 @@
             if (typeOfId === 'undefined') {
                 l.d('Pausing all file uploads');
                 files.forEach(function (file) {
-
                    if ([PENDING, EVAPORATING, ERROR].indexOf(file.status) > -1)  {
                        file.pause(force);
                    }
@@ -376,7 +375,7 @@
         }
 
         function processQueue() {
-            l.d('processQueue   length: ' + files.length);
+            l.d('processQueue   length:', files.length);
             var next = -1, priorityOfNext = -1, readyForNext = true;
             files.forEach(function (file, i) {
 
@@ -411,7 +410,7 @@
             me.signParams = con.signParams;
 
             me.start = function () {
-                l.d('starting FileUpload ' + me.id);
+                l.d('starting FileUpload', me.id);
                 me.started(me.id);
                 setStatus(EVAPORATING);
 
@@ -452,7 +451,7 @@
                 l.d('pausing FileUpload ', me.id);
                 me.info('Pausing uploads...');
                 if (force) {
-                    l.d('Pause requests to force abort parts that are evaporating');
+                    l.d('Pausing requests to force abort parts that are evaporating');
                     abortParts();
                     setStatus(PAUSED);
                     me.paused();
@@ -559,7 +558,7 @@
 
                     hasErrored = true;
 
-                    l.d('onInitiateError for FileUpload ' + me.id);
+                    l.d('onInitiateError for FileUpload ', me.id);
                     me.warn('Error initiating upload', getAwsResponse(xhr));
                     setStatus(ERROR);
 
@@ -581,7 +580,7 @@
                     if (match && match[1]) {
                         me.uploadId = match[1];
                         me.awsKey = awsKey;
-                        l.d('requester success. got uploadId ' + me.uploadId);
+                        l.d('requester success. got uploadId ', me.uploadId);
                         makeParts();
                         startFileProcessing();
                     } else {
@@ -682,9 +681,9 @@
                     } else {
                         part.status = ERROR;
                         part.loadedBytes = 0;
-                        msg = ['eTag matches MD5 of 0 length blob for part #', partNumber, 'Retrying part.'];
+                        msg = ['eTag matches MD5 of 0 length blob for part #', partNumber, 'Retrying part.'].join(" ");
                         l.w(msg);
-                        me.warn(msg.join(" "));
+                        me.warn(msg);
                     }
                     processPartsAsync();
                 };
@@ -703,9 +702,9 @@
                 };
 
                 upload.onFailedAuth = function (xhr) {
-                    var msg = ['onFailedAuth for uploadPart #', partNumber, '- Will set status to ERROR'];
+                    var msg = ['onFailedAuth for uploadPart #', partNumber, '- Will set status to ERROR'].join(" ");
                     l.w(msg);
-                    me.warn(msg.join(" "));
+                    me.warn(msg);
                     part.status = ERROR;
                     part.loadedBytes = 0;
                     removePartFromProcessing(partNumber);
@@ -719,8 +718,6 @@
                 setTimeout(function () {
                     if ([ABORTED, PAUSED, CANCELED].indexOf(me.status) === -1) {
                         if (partsInProcess.indexOf(part.part) === -1) {
-                            console.log('uploadPart #', partNumber, 'kicking off');
-
                             part.status = EVAPORATING;
                             part.attempts += 1;
                             part.loadedBytesPrevious = null;
@@ -827,7 +824,7 @@
                 };
 
                 head_object.onErr = function () {
-                    var msg = 'Error completing head object. Will re-upload file.';
+                    var msg = 'Error completing headObject. Will re-upload file.';
                     l.w(msg);
                     initiateUpload(awsKey);
                 };
@@ -988,9 +985,9 @@
 
             function getUploadParts(partNumberMarker) { //http://docs.amazonwebservices.com/AmazonS3/latest/API/mpUploadListParts.html
 
-                var msg = ['getUploadParts() for uploadId starting at part #', partNumberMarker];
+                var msg = ['getUploadParts() for uploadId starting at part #', partNumberMarker].join(" ");
                 l.d(msg);
-                me.info(msg.join(" "));
+                me.info(msg);
 
                 partsOnS3 = [];
 
@@ -1253,7 +1250,7 @@
                 clearInterval(progressPartsInterval);
                 progressPartsInterval = setInterval(function () {
 
-                    l.d('monitorPartsProgress() ' + new Date());
+                    l.d('monitorPartsProgress()');
                     partsInProcess.forEach(function (partIdx) {
 
                         var part = s3Parts[partIdx],
@@ -1325,7 +1322,9 @@
                 requester.onGotAuth = function () {
 
                     if (hasCurrentXhr(requester)) {
-                        l.w('onGotAuth() step', requester.step, 'is already in progress. Returning.');
+                        var msg = ['onGotAuth() step #', requester.step, 'is already in progress. Returning.'].join(" ");
+                        l.d(msg);
+                        l.w(msg);
                         return;
                     }
 
@@ -1372,6 +1371,7 @@
 
                             if (payload) {
                                 // Test, per http://code.google.com/p/chromium/issues/detail?id=167111#c20
+                                // Need to refer to the payload to keep it from being GC'd...sad.
                                 l.d('  ###', payload.size);
                             }
                             clearCurrentXhr(requester);
@@ -1403,12 +1403,12 @@
 
             //see: http://docs.amazonwebservices.com/AmazonS3/latest/dev/RESTAuthentication.html#ConstructingTheAuthenticationHeader
             function authorizedSend(authRequester) {
-
-                l.d('authorizedSend() ' + authRequester.step);
                 if (hasCurrentXhr(authRequester)) {
                     l.w('authorizedSend() step', authRequester.step, 'is already in progress. Returning.');
                     return;
                 }
+
+                l.d('authorizedSend()', authRequester.step);
 
                 if (con.awsLambda) {
                     return authorizedSignWithLambda(authRequester);
@@ -1444,7 +1444,7 @@
                             if (con.awsSignatureVersion === '2' &&  payload.length !== 28) {
                                 warnMsg(calledFrom);
                             } else {
-                              l.d('authorizedSend got signature for step:', authRequester.step, '- signature:', payload);
+                              l.d('authorizedSend got signature for:', authRequester.step, '- signature:', payload);
                               authRequester.auth = payload;
                               authRequester.onGotAuth();
                             }
@@ -1471,9 +1471,9 @@
                 xhr.send();
 
                 function warnMsg(srcMsg) {
-                    var a = ['failed to get authorization (', srcMsg, ') for', authRequester.step, '-  xhr.status:', xhr.status, '.-  xhr.response:', xhr.response];
+                    var a = ['failed to get authorization (', srcMsg, ') for', authRequester.step, '-  xhr.status:', xhr.status, '.-  xhr.response:', xhr.response].join(" ");
                     l.w(a);
-                    me.warn(a.join(" "));
+                    me.warn(a);
                     authRequester.onFailedAuth(xhr);
                 }
             }
@@ -1608,7 +1608,7 @@
                 canonParts.push(request.getPayloadSha256Content());
 
                 var result = canonParts.join("\n");
-                l.d('CanonicalRequest', result);
+                l.d('CanonicalRequest (V4)', result);
                 return result;
             }
 

@@ -677,6 +677,7 @@
                         part.status = COMPLETE;
 
                         partsOnS3.push(part);
+                        fileTotalBytesUploaded += part.loadedBytes;
                         retirePartFromProcessing(part);
                     } else {
                         part.status = ERROR;
@@ -960,6 +961,7 @@
                         // Success! Parts are not found because the uploadid has been cleared
                         removeUploadFile();
                         me.info('upload canceled');
+                        fileTotalBytesUploaded = 0;
                     } else {
                         var msg = 'Error listing parts.';
                         l.w(msg, getAwsResponse(xhr));
@@ -974,6 +976,7 @@
                         l.d('Parts still found after abort...waiting.');
                         setTimeout(function () { abortUpload(); }, 1000);
                     } else {
+                        fileTotalBytesUploaded = 0;
                         me.info('upload canceled');
                     }
                 };
@@ -1229,10 +1232,10 @@
                 clearInterval(progressTotalInterval);
                 progressTotalInterval = setInterval(function () {
 
-                    var totalBytesLoaded = 0;
-                    for (var i = 1; i < s3Parts.length; i++) {
+                    var totalBytesLoaded = fileTotalBytesUploaded;
+                    partsInProcess.forEach(function (i) {
                         totalBytesLoaded += s3Parts[i].loadedBytes;
-                    }
+                    });
 
                     me.progress(totalBytesLoaded / me.sizeBytes);
                 }, con.progressIntervalMS);

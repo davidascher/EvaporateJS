@@ -1181,6 +1181,7 @@
                     me.info('will not process parts list, as not currently evaporating');
                     return;
                 }
+
                 for (var i = 0; i < partsToUpload.length; i++) {
                     var part = s3Parts[partsToUpload[i]];
                     if (con.computeContentMd5 && part.md5_digest === null) {
@@ -1189,14 +1190,14 @@
                     stati.push(part.status);
                     if (part.status === EVAPORATING) {
                         bytesLoaded.push(part.loadedBytes);
-                        continue;
-                    }
-                    if (evaporatingCount < con.maxConcurrentParts && partsInProcess.indexOf(part.part) === -1) {
-                        uploadPart(part.part);
-                    }
-                    limit -= 1;
-                    if (limit === 0) {
-                        break;
+                    } else {
+                        if (evaporatingCount < con.maxConcurrentParts && partsInProcess.indexOf(part.part) === -1) {
+                            uploadPart(part.part);
+                        }
+                        limit -= 1;
+                        if (limit === 0) {
+                            break;
+                        }
                     }
                 }
 

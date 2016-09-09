@@ -528,7 +528,7 @@
             }
 
 
-            function processFileParts() {
+            function startFileProcessing() {
                 if (con.computeContentMd5 && me.file.size > 0) {
                     processPartsListWithMd5Digests();
                 } else {
@@ -583,7 +583,7 @@
                         me.awsKey = awsKey;
                         l.d('requester success. got uploadId ' + me.uploadId);
                         makeParts();
-                        processFileParts();
+                        startFileProcessing();
                     } else {
                         initiate.onErr(xhr);
                     }
@@ -1058,7 +1058,7 @@
                             makeParts();
                         }
                         monitorProgress();
-                        processFileParts();
+                        startFileProcessing();
                     }
                     listPartsResult = null;  // We don't need these potentially large object any longer
                 };

@@ -702,7 +702,7 @@
                     return slice;
                 };
 
-                upload.onFailedAuth = function (xhr) {
+                upload.onFailedAuth = function () {
                     var msg = ['onFailedAuth for uploadPart #', partNumber, '- Will set status to ERROR'].join(" ");
                     l.w(msg);
                     me.warn(msg);

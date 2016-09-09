@@ -275,7 +275,7 @@
             if (err) { return err; }
 
             var newId = addFile(file, fileConfig);
-            asynProcessQueue();
+            setTimeout(processQueue, 1);
             return newId;
         };
 
@@ -364,11 +364,6 @@
         function onFileUploadStatusChange() {
             l.d('onFileUploadStatusChange');
             processQueue();
-        }
-
-
-        function asynProcessQueue() {
-            setTimeout(processQueue, 1);
         }
 
         function s3EncodedObjectName(fileName) {

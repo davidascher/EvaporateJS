@@ -419,11 +419,14 @@
                 getUnfinishedFileUpload();
 
                 if (typeof me.uploadId === 'undefined') {
+                    // New File
                     initiateUpload(awsKey);
                 } else {
                     if (typeof me.eTag === 'undefined' || !me.firstMd5Digest) {
+                        // File with some parts on S3
                         getUploadParts(0);
                     } else {
+                        // File fullly uploaded to S3 -- check signature of first part for extra assurance
                         var reader = new FileReader();
                         reader.onloadend = function () {
                             var md5_digest = con.cryptoMd5Method.call(this, this.result);
@@ -532,8 +535,8 @@
                     processPartsListWithMd5Digests();
                 } else {
                     createUploadFile();
-                    processPartsList();
                 }
+                processPartsAsync();
             }
 
             function initiateUpload(awsKey) { // see: http://docs.amazonwebservices.com/AmazonS3/latest/API/mpUploadInitiate.html
@@ -890,16 +893,16 @@
                 for (var i = 0; i < partsToUpload.length; i++) {
                     var part = s3Parts[partsToUpload[i]];
                     if (part.md5_digest === null) {
-                        if (i > 1 || typeof me.firstMd5Digest === 'undefined') {
+                        if (partsToUpload[i] > 1 || typeof me.firstMd5Digest === 'undefined') {
                             part.reader = new FileReader();
                             part.reader.onloadend = computePartMd5Digest(part);
                             part.reader.readAsArrayBuffer(getFilePart(me.file, part.start, part.end));
-                            break;
                         } else { // We already calculated the first part's md5_digest
                             part.md5_digest = me.firstMd5Digest;
                             createUploadFile();
-                            processPartsAsync();
+                            setTimeout(processPartsListWithMd5Digests, 1500);
                         }
+                        break;
                     }
                 }
             }
@@ -1038,18 +1041,16 @@
                         var nextPartNumberMarker = nodeValue(listPartsResult, "NextPartNumberMarker");
                         getUploadParts(nextPartNumberMarker); // let's fetch the next set of parts
                     } else {
-                        if (numParts === 0) {
-                            partsOnS3.forEach(function (cp) {
-                                var uploadedPart = makePart(cp.partNumber, COMPLETE, cp.size);
-                                uploadedPart.eTag = cp.eTag;
-                                uploadedPart.attempts = 1;
-                                uploadedPart.loadedBytes = cp.size;
-                                uploadedPart.loadedBytesPrevious = cp.size;
-                                uploadedPart.finishedUploadingAt = cp.LastModified;
-                                s3Parts[cp.partNumber] = uploadedPart;
-                            });
-                            makeParts();
-                        }
+                        partsOnS3.forEach(function (cp) {
+                            var uploadedPart = makePart(cp.partNumber, COMPLETE, cp.size);
+                            uploadedPart.eTag = cp.eTag;
+                            uploadedPart.attempts = 1;
+                            uploadedPart.loadedBytes = cp.size;
+                            uploadedPart.loadedBytesPrevious = cp.size;
+                            uploadedPart.finishedUploadingAt = cp.LastModified;
+                            s3Parts[cp.partNumber] = uploadedPart;
+                        });
+                        makeParts();
                         monitorProgress();
                         startFileProcessing();
                     }

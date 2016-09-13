@@ -521,7 +521,6 @@ var evaporate = new Evaporate({
     awsLambda:  new AWS.Lambda({
         'region': 'lambda region',
         'accessKeyId': 'a key that can invoke the lambda function',
-        'secretAccessKey': 'the secret'
     }),
     awsLambdaFunction: 'arn:aws:lambda:...:function:cw-signer' // ARN of your lambda function
  });
